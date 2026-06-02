@@ -147,4 +147,59 @@ server <- function(input, output, session) {
       tags$blockquote(incident$Text, style = "border-left: 2px solid #39ff14; padding-left: 10px;")
     )
   })
+  
+  semantic_matches <- eventReactive(input$run_search, {
+    query <- input$semantic_query
+    
+    if (nchar(trimws(query)) == 0) return(NULL)
+    api_url <- "https://erqba-ufo-embeddings.hf.space/embed"
+    
+    req <- request(api_url) %>%
+      req_body_json(list(text = query)) %>%
+      req_timeout(60)
+    
+    resp <- req_perform(req)
+    
+    json_resp <- resp_body_json(resp)
+    query_embedding <- unlist(json_resp$embedding)
+    
+
+    scores <- calculate_cosine_similarity(query_embedding, ufo_embeddings)
+
+    results <- ufo_data
+    results$score <- scores
+    
+    top_results <- results %>%
+      arrange(desc(score)) %>%
+      head(4)
+    
+    return(top_results)
+  })
+  
+  output$semantic_results <- renderUI({
+    res <- semantic_matches()
+    
+    if (is.null(res)) {
+      return(tags$p("Awaiting query input...", style = "color: gray; font-style: italic;"))
+    }
+    
+    card_list <- lapply(1:nrow(res), function(i) {
+      card(
+        style = "border-left: 4px solid #39ff14; background-color: #111111; margin-bottom: 15px;",
+        card_header(
+          tags$strong(paste0("Similarity Match: ", round(res$score[i] * 100, 1), "%")),
+          tags$span(paste(" | ID:", res$Sighting[i]), style = "color: #aaaaaa; float: right;")
+        ),
+        tags$div(
+          style = "padding: 10px;",
+          tags$p(tags$b("Location: "), res$Location[i], " | ", tags$b("Date: "), res$Occurred[i]),
+          tags$p(tags$b("Shape: "), res$Shape[i]),
+          tags$hr(style = "border-color: #333333;"),
+          tags$p(res$Summary[i], style = "font-style: italic;")
+        )
+      )
+    })
+    
+    do.call(tagList, card_list)
+  })
 }

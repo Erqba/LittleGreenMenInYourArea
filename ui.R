@@ -60,6 +60,27 @@ ui <- page_navbar(
     )
   ),
   
+  nav_panel("Deep Search",
+            layout_columns(
+              col_widths = c(4, 8),
+              card(
+                card_header("AI Semantic Query"),
+                p("Describe a sighting in natural language to find the closest historical matches."),
+                textAreaInput("semantic_query", "Witness Description:", 
+                              placeholder = "e.g., a glowing green orb over the lake...",
+                              width = "100%",
+                              rows = 5),
+                actionButton("run_search", "Initialize Search", 
+                             class = "btn-primary", 
+                             style = "background-color: #39ff14; color: black; font-weight: bold;")
+              ),
+              card(
+                card_header("Top Classified Matches"),
+                uiOutput("semantic_results")
+              )
+            )
+  ),
+  
   nav_panel("Classified Info",
     card(
       card_header("About This Database"),

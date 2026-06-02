@@ -26,8 +26,6 @@ available_shapes <- sort(unique(ufo_data$Shape[!is.na(ufo_data$Shape)]))
 min_year <- min(ufo_data$Year, na.rm = TRUE)
 max_year <- max(ufo_data$Year, na.rm = TRUE)
 
-HF_TOKEN <- Sys.getenv("HF_TOKEN")
-
 calculate_cosine_similarity <- function(query_vec, db_matrix) {
   dot_products <- as.vector(db_matrix %*% query_vec)
   magnitudes <- sqrt(rowSums(db_matrix^2)) * sqrt(sum(query_vec^2))
