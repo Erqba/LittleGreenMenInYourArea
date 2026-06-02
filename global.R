@@ -4,7 +4,6 @@ library(leaflet)
 library(plotly)
 library(DT)
 library(dplyr)
-library(jsonlite)
 library(lubridate)
 library(stringr)
 library(leaflet.extras)
@@ -16,13 +15,13 @@ ufo_theme <- bs_theme(
   heading_font = font_google("Orbitron")
 )
 
-# TODO saveRDS(ufo_data, "ufo_data.rds") and readRDS("ufo_data.rds")
-ufo_data <- jsonlite::fromJSON("database.json") %>%
-  mutate(
-    Occurred_UTC = ymd_hms(Occurred_UTC),
-    Year = year(Occurred_UTC),
-    Shape = str_to_title(Shape) 
-  )
+vdb <- readRDS("ufo_vector_db.rds")
+
+ufo_data <- vdb$metadata
+ufo_embeddings <- vdb$embeddings
+
+rm(vdb)
+
 available_shapes <- sort(unique(ufo_data$Shape[!is.na(ufo_data$Shape)]))
 min_year <- min(ufo_data$Year, na.rm = TRUE)
 max_year <- max(ufo_data$Year, na.rm = TRUE)

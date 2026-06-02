@@ -6,3 +6,6 @@
 .DS_Store
 .quarto
 database.json
+ufo_vector_db.rds
+ufo_embeddings.csv
+ufo_metadata.csv
