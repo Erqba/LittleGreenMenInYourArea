@@ -7,6 +7,7 @@ library(dplyr)
 library(lubridate)
 library(stringr)
 library(leaflet.extras)
+library(httr2)
 
 ufo_theme <- bs_theme(
   preset = "cyborg",
