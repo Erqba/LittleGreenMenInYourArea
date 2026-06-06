@@ -12,7 +12,6 @@ ui <- page_navbar(
   fillable = TRUE,
   sidebar = sidebar(
     title = "Controls",
-    
     sliderInput("year_range", "Year of Sighting:",
                 min = min_year, max = max_year,
                 value = c(2000, max_year), step = 1, sep = ""),
@@ -29,6 +28,23 @@ ui <- page_navbar(
       sliderInput("map_points", "Max Map Points:",
                   min = 1000, max = 100000, 
                   value = 5000, step = 1000)
+    ),
+    
+    howler(
+      elementId = "xfiles_theme",
+      tracks = c("xfiles.mp3"),
+      options = list(
+        autoplay = FALSE, 
+        loop = TRUE
+      )
+    ),
+    tags$div(
+      style = "position: absolute; bottom: 20px; left: 20px; right: 20px; text-align: center;",
+      tags$div(
+        style = "display: block; color: #39ff14; background-color: #111111; border-radius: 5px; border: 1px solid #39ff14; padding: 5px; transition: all 0.3s;",
+        tags$span("Initialize Audio Logs"),
+        howlerPlayPauseButton("xfiles_theme")
+      )
     )
   ),
   

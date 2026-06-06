@@ -9,6 +9,7 @@ library(stringr)
 library(leaflet.extras)
 library(httr2)
 library(tidyr)
+library(howler)
 
 ufo_theme <- bs_theme(
   preset = "cyborg",
