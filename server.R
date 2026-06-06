@@ -12,26 +12,14 @@ server <- function(input, output, session) {
     return(df)
   })
   
-  # output$ufo_map <- renderLeaflet({
-  #   data <- filtered_data()
-  #   
-  #   leaflet(data) %>%
-  #     addProviderTiles(providers$CartoDB.DarkMatter) %>%
-  #     addHeatmap(
-  #       lng = ~Longitude, lat = ~Latitude,
-  #       blur = 20, 
-  #       max = 0.05, 
-  #       radius = 12,
-  #       gradient = c("#002200", "#006600", "#39ff14", "#ffffff") 
-  #     )
-  # })
-  
-    output$ufo_map <- renderLeaflet({
+  output$ufo_map <- renderLeaflet({
     data <- filtered_data()
     
-    if (nrow(data) > 10000) {
+    point_limit <- input$map_points
+    
+    if (nrow(data) > point_limit) {
       set.seed(42)
-      data <- data[sample(nrow(data), 10000), ]
+      data <- data[sample(nrow(data), point_limit), ]
     }
     
     leaflet(data, options = leafletOptions(preferCanvas = TRUE)) %>%
@@ -42,7 +30,7 @@ server <- function(input, output, session) {
         stroke = FALSE,
         fillColor = "#39ff14", 
         fillOpacity = 0.6,
-        popup = ~paste("Date:", Occurred, "<br>Shape:", Shape)
+        popup = ~paste("<b>Date:</b>", Occurred, "<br><b>Shape:</b>", Shape)
       )
   })
   
@@ -50,44 +38,201 @@ server <- function(input, output, session) {
     data <- filtered_data() %>%
       count(Year)
     
-    p <- plot_ly(data, x = ~Year, y = ~n, type = 'scatter', mode = 'lines+markers',
-                 line = list(color = '#39ff14'), marker = list(color = '#39ff14')) %>%
-      layout(paper_bgcolor = 'transparent', plot_bgcolor = 'transparent',
-             font = list(color = 'white'),
-             xaxis = list(title = "Year"), yaxis = list(title = "Number of Sightings"))
+    p <- plot_ly(
+      data, x = ~Year, y = ~n, type = 'scatter', mode = 'lines+markers',
+      line = list(color = '#39ff14'), marker = list(color = '#39ff14'),
+      hoverinfo = "text",
+      text = ~paste("<b>Year:</b>", Year, "<br><b>Sightings:</b>", n)
+    ) %>%
+      layout(
+        paper_bgcolor = 'transparent', 
+        plot_bgcolor = 'transparent',
+        font = list(color = 'white'),
+        xaxis = list(title = "Year"), 
+        yaxis = list(title = "Number of Sightings"),
+        hoverlabel = list(
+          bgcolor = "#111111",      
+          bordercolor = "#39ff14",  
+          font = list(family = "Space Mono", color = "white", size = 12)
+        )
+      )
     
     p
   })
   
-  output$shape_treemap <- renderPlotly({
-    shape_counts <- filtered_data() %>%
-      filter(!is.na(Shape) & Shape != "") %>% 
-      count(Shape) %>%
-      arrange(desc(n)) %>%
-      head(20)
+  output$time_heatmap <- renderPlotly({
     
-    if(nrow(shape_counts) == 0) return(plotly_empty())
+    heat_df <- filtered_data() %>%
+      filter(!is.na(DayOfWeek) & !is.na(Hour)) %>%
+      count(DayOfWeek, Hour)
     
-    plot_ly(
-      data = shape_counts,
-      type = "treemap",
-      labels = ~Shape,
-      parents = "UFO Shapes",
-      values = ~n,
-      textinfo = "label+value",
-      marker = list(colorscale = "Greens", reversescale = TRUE)
+    p <- plot_ly(
+      data = heat_df,
+      x = ~Hour,
+      y = ~DayOfWeek,
+      z = ~n,
+      type = "heatmap",
+      source = "heatmap_clicks", 
+      
+      xgap = 2, 
+      ygap = 2,
+      
+      colorscale = list(
+        c(0, "rgba(0,34,0,0.3)"), 
+        c(0.4, "#004400"), 
+        c(0.7, "#008800"), 
+        c(1, "#39ff14")
+      ),
+      hoverinfo = "text",
+      text = ~paste("<b>Day:</b>", DayOfWeek, "<br><b>Hour:</b>", sprintf("%02d:00", Hour), "<br><b>Sightings:</b>", n)
     ) %>%
       layout(
         paper_bgcolor = 'transparent',
         plot_bgcolor = 'transparent',
         font = list(color = 'white'),
-        margin = list(t = 0, b = 0, l = 0, r = 0)
+        
+        xaxis = list(
+          title = "Hour of Day (Local Time)", 
+          dtick = 2, 
+          showgrid = FALSE, 
+          zeroline = FALSE,
+          tickfont = list(color = "#aaaaaa") 
+        ),
+        
+        yaxis = list(
+          title = "", 
+          autorange = "reversed", 
+          showgrid = FALSE, 
+          zeroline = FALSE,
+          tickfont = list(color = "#aaaaaa", size = 13)
+        ),
+        
+        hoverlabel = list(
+          bgcolor = "#111111",      
+          bordercolor = "#39ff14",  
+          font = list(family = "Space Mono", color = "white", size = 12)
+        ),
+        
+        margin = list(l = 50, r = 20, b = 50, t = 20)
+      )
+    
+    p
+  })
+  
+  output$dynamic_shape_bar <- renderPlotly({
+    click_data <- event_data("plotly_click", source = "heatmap_clicks")
+    
+    chart_data <- filtered_data() %>% filter(!is.na(Shape) & Shape != "")
+    
+    chart_title <- "Top Shapes (All Times)"
+    
+    if (!is.null(click_data)) {
+      clicked_hour <- click_data$x
+      clicked_day <- click_data$y
+      
+      chart_data <- chart_data %>%
+        filter(Hour == clicked_hour, DayOfWeek == clicked_day)
+      
+      chart_title <- paste("Shapes seen on", clicked_day, "at", clicked_hour, "00 Local")
+    }
+    
+    shape_counts <- chart_data %>%
+      count(Shape) %>%
+      arrange(n) %>% 
+      tail(10)       
+    
+    if (nrow(shape_counts) == 0) {
+      return(plotly_empty() %>% layout(
+        title = list(text = "No sightings for this time slot", font = list(color = "#39ff14")),
+        paper_bgcolor = 'transparent', plot_bgcolor = 'transparent'
+      ))
+    }
+    
+    plot_ly(
+      data = shape_counts,
+      x = ~n,
+      y = ~factor(Shape, levels = Shape), 
+      type = "bar",
+      marker = list(color = "#39ff14", line = list(color = "black", width = 1)),
+      
+      textposition = "none",
+      
+      hoverinfo = "text",
+      text = ~paste("<b>Shape:</b>", Shape, "<br><b>Sightings:</b>", n)
+    ) %>%
+      layout(
+        title = list(text = chart_title, font = list(size = 14, color = "white")),
+        paper_bgcolor = 'transparent',
+        plot_bgcolor = 'transparent',
+        font = list(color = 'white'),
+        xaxis = list(title = "Number of Sightings", showgrid = TRUE, gridcolor = "#333333"),
+        yaxis = list(title = "", showgrid = FALSE),
+        margin = list(l = 100, r = 20, b = 50, t = 40),
+        hoverlabel = list(
+          bgcolor = "#111111",      
+          bordercolor = "#39ff14",  
+          font = list(family = "Space Mono", color = "white", size = 12)
+        )
       )
   })
   
-  output$duration_boxplot <- renderPlotly({
+  output$characteristics_radar <- renderPlotly({
+    
+    if (!"Characteristics" %in% names(filtered_data())) {
+      return(plotly_empty() %>% layout(title = list(text = "Characteristics data not found in DB", font = list(color = "#ff3333"))))
+    }
+    
+    traits_data <- filtered_data() %>%
+      filter(!is.na(Characteristics) & Characteristics != "") %>%
+      mutate(Characteristics = str_remove_all(Characteristics, "[\\[\\]']")) %>%
+      separate_rows(Characteristics, sep = ",\\s*") %>% 
+      filter(Characteristics != "") %>%
+      count(Characteristics) %>%
+      arrange(desc(n)) %>%
+      head(6) 
+    
+    if(nrow(traits_data) < 3) {
+      return(plotly_empty() %>% layout(
+        title = list(text = "Not enough trait data to profile", font = list(color = "#39ff14")),
+        paper_bgcolor = 'transparent', plot_bgcolor = 'transparent'
+      ))
+    }
+    
+    traits_data <- rbind(traits_data, traits_data[1, ])
+    
+    plot_ly(
+      data = traits_data,             
+      type = 'scatterpolar',
+      mode = 'lines+markers',         
+      r = ~n,                         
+      theta = ~Characteristics,       
+      fill = 'toself',
+      fillcolor = 'rgba(57, 255, 20, 0.2)', 
+      line = list(color = '#39ff14', width = 2),
+      marker = list(color = '#39ff14', size = 6),
+      hoverinfo = "text",
+      text = ~paste("<b>Characteristic:</b>", Characteristics, "<br><b>Sightings:</b>", n)
+    ) %>%
+      layout(
+        polar = list(
+          radialaxis = list(visible = TRUE, gridcolor = "#333333", tickfont = list(color = "#aaaaaa"), linecolor = "#333333"),
+          angularaxis = list(gridcolor = "#333333", tickfont = list(color = "white", size = 11), linecolor = "#333333"),
+          bgcolor = "transparent"
+        ),
+        paper_bgcolor = 'transparent',
+        plot_bgcolor = 'transparent',
+        margin = list(t = 40, b = 40, l = 40, r = 40),
+        hoverlabel = list(
+          bgcolor = "#111111",      
+          bordercolor = "#39ff14",  
+          font = list(family = "Space Mono", color = "white", size = 12)
+        )
+      )
+  })
+  
+  output$duration_violin <- renderPlotly({
     data <- filtered_data() %>%
-      filter(!is.na(Shape) & Shape != "")
+      filter(!is.na(Shape) & Shape != "" & Duration_Seconds > 0)
     
     if(nrow(data) == 0) return(plotly_empty())
     
@@ -95,17 +240,39 @@ server <- function(input, output, session) {
       data,
       x = ~Shape,
       y = ~Duration_Seconds,
-      type = "box",
+      split = ~Shape,           
+      type = "violin",
       color = I("#39ff14"),
-      marker = list(color = "#39ff14", size = 2),
-      line = list(color = "#39ff14")
+      scalemode = "width",      
+      points = FALSE,           
+      line = list(color = "#39ff14", width = 1.5),
+      box = list(visible = TRUE), 
+      meanline = list(visible = TRUE),
+      hovertemplate = "<b>Shape:</b> %{x}<br><b>Duration:</b> %{y} sec<extra></extra>"
     ) %>%
       layout(
         paper_bgcolor = 'transparent',
         plot_bgcolor = 'transparent',
         font = list(color = 'white'),
-        xaxis = list(title = "", tickangle = 45),
-        yaxis = list(title = "Duration (Seconds)")
+        showlegend = FALSE, 
+        xaxis = list(
+          title = "", 
+          tickangle = 45, 
+          showgrid = TRUE, 
+          gridcolor = "#333333"
+        ),
+        yaxis = list(
+          title = "Duration (Seconds)", 
+          showgrid = TRUE, 
+          gridcolor = "#333333",
+          zerolinecolor = "#333333"
+        ),
+        margin = list(b = 80, l = 60, r = 20, t = 20),
+        hoverlabel = list(
+          bgcolor = "#111111",      
+          bordercolor = "#39ff14",  
+          font = list(family = "Space Mono", color = "white", size = 12)
+        )
       )
     
     if (input$log_scale) {
@@ -163,9 +330,8 @@ server <- function(input, output, session) {
     json_resp <- resp_body_json(resp)
     query_embedding <- unlist(json_resp$embedding)
     
-
     scores <- calculate_cosine_similarity(query_embedding, ufo_embeddings)
-
+    
     results <- ufo_data
     results$score <- scores
     

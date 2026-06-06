@@ -1,10 +1,18 @@
 ui <- page_navbar(
-  title = tags$span(tags$img(src = "ufo_logo.png", height = "30px", style = "margin-right: 10px;"), "LittleGreenMenInYourArea"),
+  id = "main_tabs", 
+  title = tags$span(
+    tags$img(
+      src = "ufo_logo_4.png", 
+      height = "70px",
+      style = "margin-top: -5px; margin-bottom: -5px;"
+    ), 
+    "LittleGreenMenInYourArea"
+  ),
   theme = ufo_theme,
   fillable = TRUE,
-  
   sidebar = sidebar(
-    title = "Radar Controls",
+    title = "Controls",
+    
     sliderInput("year_range", "Year of Sighting:",
                 min = min_year, max = max_year,
                 value = c(2000, max_year), step = 1, sep = ""),
@@ -14,7 +22,14 @@ ui <- page_navbar(
                 selected = "All"),
     
     numericInput("min_duration", "Min Duration (Seconds):", 
-                 value = 0, min = 0)
+                 value = 0, min = 0),
+    
+    conditionalPanel(
+      condition = "input.main_tabs == 'The Radar'",
+      sliderInput("map_points", "Max Map Points:",
+                  min = 1000, max = 100000, 
+                  value = 5000, step = 1000)
+    )
   ),
   
   nav_panel("The Radar",
@@ -32,18 +47,34 @@ ui <- page_navbar(
   ),
   
   nav_panel("The Profiler",
-    layout_columns(
-      col_widths = c(6, 6),
-      card(
-        card_header("Common Shapes (Click to filter Box Plot)"),
-        plotlyOutput("shape_treemap")
-      ),
-      card(
-        card_header("Duration by Shape"),
-        checkboxInput("log_scale", "Log Scale (Y-Axis)", value = TRUE),
-        plotlyOutput("duration_boxplot")
-      )
-    )
+            navset_pill(
+              nav_panel("Time & Shape Analysis",
+                        layout_columns(
+                          col_widths = c(6, 6),
+                          card(
+                            card_header("When do the aliens appear? (Click a cell to filter)"),
+                            plotlyOutput("time_heatmap", height = "500px")
+                          ),
+                          card(
+                            card_header("What are the aliens flying?"),
+                            plotlyOutput("dynamic_shape_bar", height = "500px")
+                          )
+                        )
+              ),
+              nav_panel("Entity Characteristics",
+                        card(
+                          card_header("Common Characteristics"),
+                          plotlyOutput("characteristics_radar", height = "600px")
+                        )
+              ),
+              nav_panel("Duration Analysis",
+                        card(
+                          card_header("Duration by Shape"),
+                          checkboxInput("log_scale", "Log Scale (Y-Axis)", value = TRUE),
+                          plotlyOutput("duration_violin", height = "600px")
+                        )
+              )
+            )
   ),
   
   nav_panel("The X-Files",

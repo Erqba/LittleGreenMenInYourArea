@@ -8,6 +8,7 @@ library(lubridate)
 library(stringr)
 library(leaflet.extras)
 library(httr2)
+library(tidyr)
 
 ufo_theme <- bs_theme(
   preset = "cyborg",
@@ -22,6 +23,14 @@ ufo_data <- vdb$metadata
 ufo_embeddings <- vdb$embeddings
 
 rm(vdb)
+
+ufo_data <- ufo_data %>%
+  mutate(
+    Occurred_Clean = str_remove(Occurred, " Local"),
+    Occurred_Local = ymd_hms(Occurred_Clean),
+    DayOfWeek = wday(Occurred_Local, label = TRUE, abbr = FALSE, week_start = 1),
+    Hour = hour(Occurred_Local)
+  )
 
 available_shapes <- sort(unique(ufo_data$Shape[!is.na(ufo_data$Shape)]))
 min_year <- min(ufo_data$Year, na.rm = TRUE)
