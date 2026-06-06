@@ -195,7 +195,8 @@ server <- function(input, output, session) {
           tags$p(tags$b("Location: "), res$Location[i], " | ", tags$b("Date: "), res$Occurred[i]),
           tags$p(tags$b("Shape: "), res$Shape[i]),
           tags$hr(style = "border-color: #333333;"),
-          tags$p(res$Summary[i], style = "font-style: italic;")
+          tags$p(tags$b("Summary: "), res$Summary[i]),
+          tags$p(tags$b("Full Text: "), tags$span(res$Text[i], style = "font-style: italic; color: #cccccc;"))
         )
       )
     })
