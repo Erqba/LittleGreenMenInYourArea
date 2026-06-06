@@ -230,56 +230,51 @@ server <- function(input, output, session) {
       )
   })
   
-  output$duration_violin <- renderPlotly({
+  output$seasonal_rose <- renderPlotly({
     data <- filtered_data() %>%
-      filter(!is.na(Shape) & Shape != "" & Duration_Seconds > 0)
+      filter(!is.na(Month)) %>%
+      count(Month)
     
     if(nrow(data) == 0) return(plotly_empty())
     
-    p <- plot_ly(
+    plot_ly(
       data,
-      x = ~Shape,
-      y = ~Duration_Seconds,
-      split = ~Shape,           
-      type = "violin",
-      color = I("#39ff14"),
-      scalemode = "width",      
-      points = FALSE,           
-      line = list(color = "#39ff14", width = 1.5),
-      box = list(visible = TRUE), 
-      meanline = list(visible = TRUE),
-      hovertemplate = "<b>Shape:</b> %{x}<br><b>Duration:</b> %{y} sec<extra></extra>"
+      r = ~n,
+      theta = ~Month,
+      type = "barpolar",
+      marker = list(
+        color = "rgba(57, 255, 20, 0.4)",
+        line = list(color = "#39ff14", width = 1)
+      ),
+      hoverinfo = "text",
+      text = ~paste("<b>Month:</b>", Month, "<br><b>Sightings:</b>", n)
     ) %>%
       layout(
+        polar = list(
+          angularaxis = list(
+            direction = "clockwise",
+            tickfont = list(color = "white", size = 11),
+            linecolor = "#333333",
+            gridcolor = "#333333"
+          ),
+          radialaxis = list(
+            visible = TRUE,
+            showticklabels = FALSE,
+            linecolor = "#333333",
+            gridcolor = "#333333"
+          ),
+          bgcolor = "transparent"
+        ),
         paper_bgcolor = 'transparent',
         plot_bgcolor = 'transparent',
-        font = list(color = 'white'),
-        showlegend = FALSE, 
-        xaxis = list(
-          title = "", 
-          tickangle = 45, 
-          showgrid = TRUE, 
-          gridcolor = "#333333"
-        ),
-        yaxis = list(
-          title = "Duration (Seconds)", 
-          showgrid = TRUE, 
-          gridcolor = "#333333",
-          zerolinecolor = "#333333"
-        ),
-        margin = list(b = 80, l = 60, r = 20, t = 20),
+        margin = list(t = 40, b = 40, l = 40, r = 40),
+        
         hoverlabel = list(
           bgcolor = "#111111",      
           bordercolor = "#39ff14",  
           font = list(family = "Space Mono", color = "white", size = 12)
         )
       )
-    
-    if (input$log_scale) {
-      p <- p %>% layout(yaxis = list(type = "log", title = "Duration (Seconds) [Log Scale]"))
-    }
-    
-    p
   })
   
   output$ufo_table <- renderDT({
@@ -305,8 +300,8 @@ server <- function(input, output, session) {
     
     tagList(
       h4(paste("Incident Location:", incident$Location), style = "color: #39ff14;"),
-      tags$b("Reported Time: "), tags$span(incident$Occurred), tags$br(),
-      tags$b("Duration: "), tags$span(incident$Duration), tags$br(),
+      tags$b("Reported Time: "), tags$span(incident$Occurred),
+      tags$b("Duration: "), tags$span(incident$Duration),
       tags$hr(),
       tags$b("Summary:"),
       tags$p(incident$Summary),

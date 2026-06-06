@@ -67,11 +67,12 @@ ui <- page_navbar(
                           plotlyOutput("characteristics_radar", height = "600px")
                         )
               ),
-              nav_panel("Duration Analysis",
+              nav_panel("Seasonal Analysis",
                         card(
-                          card_header("Duration by Shape"),
-                          checkboxInput("log_scale", "Log Scale (Y-Axis)", value = TRUE),
-                          plotlyOutput("duration_violin", height = "600px")
+                          card_header("The Seasonal Scanner: Sightings by Month"),
+                          p("Analyzing the cyclical nature of anomalies.", 
+                            style = "color: #aaaaaa; font-size: 0.9em; margin-left: 15px;"),
+                          plotlyOutput("seasonal_rose", height = "550px") 
                         )
               )
             )
