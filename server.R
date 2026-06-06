@@ -223,13 +223,15 @@ server <- function(input, output, session) {
       chart_title <- "Common Characteristics"
     }
     
-    traits_data <- chart_data %>%
-      mutate(Characteristics = str_remove_all(Characteristics, "[\\[\\]']")) %>%
-      separate_rows(Characteristics, sep = ",\\s*") %>% 
+    clean_chars <- str_remove_all(chart_data$Characteristics, "[\\[\\]']")
+    split_chars <- strsplit(clean_chars, ",\\s*")
+    trait_counts <- as.data.frame(table(unlist(split_chars)), stringsAsFactors = FALSE)
+    names(trait_counts) <- c("Characteristics", "n")
+    
+    traits_data <- trait_counts %>%
       filter(Characteristics != "") %>%
-      count(Characteristics) %>%
       arrange(desc(n)) %>%
-      head(6) 
+      head(6)
     
     if(nrow(traits_data) < 3) {
       return(plotly_empty() %>% layout(
