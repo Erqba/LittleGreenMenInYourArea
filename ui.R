@@ -1,5 +1,5 @@
 ui <- page_navbar(
-  title = "LittleGreenMenInYourArea",
+  title = tags$span(tags$img(src = "ufo_logo.png", height = "30px", style = "margin-right: 10px;"), "LittleGreenMenInYourArea"),
   theme = ufo_theme,
   fillable = TRUE,
   
