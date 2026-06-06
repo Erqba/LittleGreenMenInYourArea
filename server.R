@@ -61,10 +61,21 @@ server <- function(input, output, session) {
   })
   
   output$time_heatmap <- renderPlotly({
+    month_click <- event_data("plotly_click", source = "month_clicks")
     
-    heat_df <- filtered_data() %>%
-      filter(!is.na(DayOfWeek) & !is.na(Hour)) %>%
-      count(DayOfWeek, Hour)
+    base_data <- filtered_data() %>% filter(!is.na(DayOfWeek) & !is.na(Hour))
+    if (!is.null(month_click)) {
+      selected_month <- month_click$customdata
+      base_data <- base_data %>% filter(Month == selected_month)
+    }
+    
+    heat_df <- base_data %>% count(DayOfWeek, Hour)
+    if(nrow(heat_df) == 0) {
+      return(plotly_empty() %>% layout(
+        title = list(text = "No sightings for this criteria", font = list(color = "#39ff14")),
+        paper_bgcolor = 'transparent', plot_bgcolor = 'transparent'
+      ))
+    }
     
     p <- plot_ly(
       data = heat_df,
@@ -96,7 +107,7 @@ server <- function(input, output, session) {
           dtick = 2, 
           showgrid = FALSE, 
           zeroline = FALSE,
-          tickfont = list(color = "#aaaaaa") 
+          tickfont = list(color = "#aaaaaa")
         ),
         
         yaxis = list(
@@ -118,22 +129,31 @@ server <- function(input, output, session) {
     
     p
   })
-  
   output$dynamic_shape_bar <- renderPlotly({
-    click_data <- event_data("plotly_click", source = "heatmap_clicks")
+    
+    heatmap_click <- event_data("plotly_click", source = "heatmap_clicks")
+    month_click <- event_data("plotly_click", source = "month_clicks")
     
     chart_data <- filtered_data() %>% filter(!is.na(Shape) & Shape != "")
+    title_parts <- c()
+
+    if (!is.null(month_click)) {
+      selected_month <- month_click$customdata
+      chart_data <- chart_data %>% filter(Month == selected_month)
+      title_parts <- c(title_parts, paste("in", selected_month))
+    }
     
-    chart_title <- "Top Shapes (All Times)"
+    if (!is.null(heatmap_click)) {
+      selected_hour <- heatmap_click$x
+      selected_day <- heatmap_click$y
+      chart_data <- chart_data %>% filter(Hour == selected_hour, DayOfWeek == selected_day)
+      title_parts <- c(title_parts, paste0("on ", selected_day, " at ", selected_hour, ":00 Local"))
+    }
     
-    if (!is.null(click_data)) {
-      clicked_hour <- click_data$x
-      clicked_day <- click_data$y
-      
-      chart_data <- chart_data %>%
-        filter(Hour == clicked_hour, DayOfWeek == clicked_day)
-      
-      chart_title <- paste("Shapes seen on", clicked_day, "at", clicked_hour, "00 Local")
+    if (length(title_parts) > 0) {
+      chart_title <- paste("Shapes seen", paste(title_parts, collapse = " "))
+    } else {
+      chart_title <- "Top Shapes (All Times)"
     }
     
     shape_counts <- chart_data %>%
@@ -143,7 +163,7 @@ server <- function(input, output, session) {
     
     if (nrow(shape_counts) == 0) {
       return(plotly_empty() %>% layout(
-        title = list(text = "No sightings for this time slot", font = list(color = "#39ff14")),
+        title = list(text = "No sightings for this criteria", font = list(color = "#39ff14")),
         paper_bgcolor = 'transparent', plot_bgcolor = 'transparent'
       ))
     }
@@ -178,12 +198,32 @@ server <- function(input, output, session) {
   
   output$characteristics_radar <- renderPlotly({
     
-    if (!"Characteristics" %in% names(filtered_data())) {
-      return(plotly_empty() %>% layout(title = list(text = "Characteristics data not found in DB", font = list(color = "#ff3333"))))
+    heatmap_click <- event_data("plotly_click", source = "heatmap_clicks")
+    month_click <- event_data("plotly_click", source = "month_clicks")
+    
+    chart_data <- filtered_data() %>% filter(!is.na(Characteristics) & Characteristics != "")
+    title_parts <- c()
+    
+    if (!is.null(month_click)) {
+      selected_month <- month_click$customdata
+      chart_data <- chart_data %>% filter(Month == selected_month)
+      title_parts <- c(title_parts, paste("in", selected_month))
     }
     
-    traits_data <- filtered_data() %>%
-      filter(!is.na(Characteristics) & Characteristics != "") %>%
+    if (!is.null(heatmap_click)) {
+      selected_hour <- heatmap_click$x
+      selected_day <- heatmap_click$y
+      chart_data <- chart_data %>% filter(Hour == selected_hour, DayOfWeek == selected_day)
+      title_parts <- c(title_parts, paste0("on ", selected_day, " at ", selected_hour, ":00 Local"))
+    }
+    
+    if (length(title_parts) > 0) {
+      chart_title <- paste("Traits reported", paste(title_parts, collapse = " "))
+    } else {
+      chart_title <- "Common Characteristics"
+    }
+    
+    traits_data <- chart_data %>%
       mutate(Characteristics = str_remove_all(Characteristics, "[\\[\\]']")) %>%
       separate_rows(Characteristics, sep = ",\\s*") %>% 
       filter(Characteristics != "") %>%
@@ -193,13 +233,13 @@ server <- function(input, output, session) {
     
     if(nrow(traits_data) < 3) {
       return(plotly_empty() %>% layout(
-        title = list(text = "Not enough trait data to profile", font = list(color = "#39ff14")),
+        title = list(text = "Not enough trait data to profile", font = list(color = "#39ff14", size = 14)),
         paper_bgcolor = 'transparent', plot_bgcolor = 'transparent'
       ))
     }
     
     traits_data <- rbind(traits_data, traits_data[1, ])
-    
+
     plot_ly(
       data = traits_data,             
       type = 'scatterpolar',
@@ -214,6 +254,7 @@ server <- function(input, output, session) {
       text = ~paste("<b>Characteristic:</b>", Characteristics, "<br><b>Sightings:</b>", n)
     ) %>%
       layout(
+        title = list(text = chart_title, font = list(size = 14, color = "white"), y = 0.95),
         polar = list(
           radialaxis = list(visible = TRUE, gridcolor = "#333333", tickfont = list(color = "#aaaaaa"), linecolor = "#333333"),
           angularaxis = list(gridcolor = "#333333", tickfont = list(color = "white", size = 11), linecolor = "#333333"),
@@ -221,7 +262,7 @@ server <- function(input, output, session) {
         ),
         paper_bgcolor = 'transparent',
         plot_bgcolor = 'transparent',
-        margin = list(t = 40, b = 40, l = 40, r = 40),
+        margin = list(t = 50, b = 40, l = 40, r = 40),
         hoverlabel = list(
           bgcolor = "#111111",      
           bordercolor = "#39ff14",  
@@ -241,6 +282,10 @@ server <- function(input, output, session) {
       data,
       r = ~n,
       theta = ~Month,
+      
+      customdata = ~as.character(Month), 
+      source = "month_clicks",           
+      
       type = "barpolar",
       marker = list(
         color = "rgba(57, 255, 20, 0.4)",
@@ -332,7 +377,7 @@ server <- function(input, output, session) {
     
     top_results <- results %>%
       arrange(desc(score)) %>%
-      head(4)
+      head(3)
     
     return(top_results)
   })

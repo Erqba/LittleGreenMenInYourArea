@@ -47,33 +47,26 @@ ui <- page_navbar(
   ),
   
   nav_panel("The Profiler",
-            navset_pill(
-              nav_panel("Time & Shape Analysis",
-                        layout_columns(
-                          col_widths = c(6, 6),
-                          card(
-                            card_header("When do the aliens appear? (Click a cell to filter)"),
-                            plotlyOutput("time_heatmap", height = "500px")
-                          ),
-                          card(
-                            card_header("What are the aliens flying?"),
-                            plotlyOutput("dynamic_shape_bar", height = "500px")
-                          )
-                        )
+            layout_columns(
+              col_widths = c(6, 6),
+              card(
+                card_header("1. Seasonal Scanner (Click to filter below)"),
+                plotlyOutput("seasonal_rose", height = "380px") 
               ),
-              nav_panel("Entity Characteristics",
-                        card(
-                          card_header("Common Characteristics"),
-                          plotlyOutput("characteristics_radar", height = "600px")
-                        )
+              card(
+                card_header("2. Temporal Matrix (Click to filter below)"),
+                plotlyOutput("time_heatmap", height = "380px") 
+              )
+            ),
+            layout_columns(
+              col_widths = c(6, 6),
+              card(
+                card_header("3. Shape Profiler (Double-click others to reset)"),
+                plotlyOutput("dynamic_shape_bar", height = "380px") 
               ),
-              nav_panel("Seasonal Analysis",
-                        card(
-                          card_header("The Seasonal Scanner: Sightings by Month"),
-                          p("Analyzing the cyclical nature of anomalies.", 
-                            style = "color: #aaaaaa; font-size: 0.9em; margin-left: 15px;"),
-                          plotlyOutput("seasonal_rose", height = "550px") 
-                        )
+              card(
+                card_header("4. Entity Characteristics (Double-click others to reset)"),
+                plotlyOutput("characteristics_radar", height = "380px") 
               )
             )
   ),
