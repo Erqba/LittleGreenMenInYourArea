@@ -274,6 +274,7 @@ server <- function(input, output, session) {
       line = list(color = '#39ff14', width = 2),
       marker = list(color = '#39ff14', size = 6),
       hoverinfo = "text",
+      hoveron = "points",
       text = ~paste("<b>Characteristic:</b>", Characteristics, "<br><b>Sightings:</b>", n)
     ) %>%
       layout(
