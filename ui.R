@@ -26,7 +26,7 @@ ui <- page_navbar(
     conditionalPanel(
       condition = "input.main_tabs == 'The Radar'",
       sliderInput("map_points", "Max Map Points:",
-                  min = 1000, max = 15000, 
+                  min = 1000, max = 100000, 
                   value = 5000, step = 1000)
     ),
     
@@ -35,7 +35,9 @@ ui <- page_navbar(
       tracks = c("xfiles.mp3"),
       options = list(
         autoplay = FALSE, 
-        loop = TRUE
+        loop = TRUE,
+        html5 = TRUE,
+        preload = TRUE
       )
     ),
     tags$div(

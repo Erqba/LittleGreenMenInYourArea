@@ -382,23 +382,17 @@ server <- function(input, output, session) {
     query <- input$semantic_query
     
     if (nchar(trimws(query)) == 0) return(NULL)
-    api_url <- "https://erqba-ufo-embeddings.hf.space/embed"
+    
+    api_url <- "https://erqba-ufo-embeddings.hf.space/search"
     
     req <- request(api_url) %>%
-      req_body_json(list(text = query)) %>%
+      req_body_json(list(text = query, top_k = 3)) %>%
       req_timeout(60)
     
     resp <- req_perform(req)
-    
     json_resp <- resp_body_json(resp)
-    query_embedding <- unlist(json_resp$embedding)
     
-    scores <- calculate_cosine_similarity(query_embedding, ufo_embeddings)
-    
-    top_indices <- order(scores, decreasing = TRUE)[1:3]
-    
-    top_results <- ufo_data[top_indices, ]
-    top_results$score <- scores[top_indices]
+    top_results <- bind_rows(json_resp$matches)
     
     return(top_results)
   })

@@ -18,18 +18,8 @@ ufo_theme <- bs_theme(
   heading_font = font_google("Orbitron")
 )
 
-vdb <- readRDS("ufo_vector_db.rds")
-
-ufo_data <- vdb$metadata
-ufo_embeddings <- vdb$embeddings
-
-rm(vdb)
+ufo_data <- readRDS("ufo_data.rds")
 
 available_shapes <- sort(unique(ufo_data$Shape[!is.na(ufo_data$Shape)]))
 min_year <- min(ufo_data$Year, na.rm = TRUE)
 max_year <- max(ufo_data$Year, na.rm = TRUE)
-
-calculate_cosine_similarity <- function(query_vec, db_matrix) {
-  query_norm <- query_vec / sqrt(sum(query_vec^2))
-  return(as.vector(db_matrix %*% query_norm))
-}
