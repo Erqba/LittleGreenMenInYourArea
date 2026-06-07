@@ -107,7 +107,7 @@ ui <- page_navbar(
             layout_columns(
               col_widths = c(4, 8),
               card(
-                card_header("AI Semantic Query"),
+                card_header("Semantic Query"),
                 p("Describe a sighting in natural language to find the closest historical matches."),
                 textAreaInput("semantic_query", "Witness Description:", 
                               placeholder = "e.g., a glowing green orb over the lake...",
@@ -125,10 +125,32 @@ ui <- page_navbar(
   ),
   
   nav_panel("Classified Info",
-    card(
-      card_header("About This Database"),
-      p("Welcome to LittleGreenMenInYourArea. This dashboard analyzes over 100,000 geocoded, time-normalized sightings from the NUFORC database."),
-      p("Use the sidebar to filter the data globally. Clicking on table rows in 'The X-Files' tab will reveal the original witness statements.")
-    )
+            card(
+              style = "border: 1px solid #39ff14; background-color: #0a0a0a;",
+              card_header(
+                tags$strong("TOP SECRET", style = "color: #39ff14; font-family: 'Orbitron', sans-serif; font-size: 1.2em;")
+              ),
+              tags$div(
+                style = "padding: 15px; font-family: 'Space Mono', monospace; line-height: 1.6; color: #cccccc;",
+                
+                tags$p(tags$b("STATUS: "), tags$span("ACTIVE", style = "color: #39ff14;")),
+                tags$p("Welcome to the ", tags$b("LittleGreenMenInYourArea.", style = "color: white;"), "This dashboard analyzes over ", tags$b("100,000 UFO sightings", style = "color: white;"), " compiled from the NUFORC database."),
+                
+                tags$hr(style = "border-color: #333333; margin: 20px 0;"),
+                
+                tags$h5("GLOBAL PARAMETERS", style = "color: #39ff14; margin-bottom: 15px;"),
+                tags$p("Use the primary controls in the sidebar to filter the phenomena by year of occurrence, reported shape, and minimum duration. ", tags$i("Initialize Audio Logs"), " to establish a more mysterious environment."),
+                
+                tags$h5("MODULES", style = "color: #39ff14; margin-top: 25px; margin-bottom: 15px;"),
+                tags$ul(
+                  tags$li(tags$b("The Radar:", style = "color: white;"), " Pinpoint sightings on the map and track UFO activity across the timeline."),
+                  tags$li(tags$b("The Profiler:", style = "color: white;"), " An interactive cross-referencing matrix. Selecting variables within the Seasonal Scanner or Temporal Matrix will dynamically recalculate the Top Shapes and Entity Characteristics for that specific criteria."),
+                  tags$li(tags$b("The X-Files:", style = "color: white;"), " The raw incident logs. Selecting a specific row within the data table will decrypt the full, unredacted witness testimony for that event."),
+                  tags$li(tags$b("Deep Search:", style = "color: white;"), " Semantic Query system. Describe an encounter in natural language, and a vector embedding system will retrieve the closest historical matches from the archives.")
+                ),
+                
+                tags$hr(style = "border-color: #333333; margin: 20px 0;"),
+              )
+            )
   )
 )
