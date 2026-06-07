@@ -64,15 +64,19 @@ server <- function(input, output, session) {
     month_click <- event_data("plotly_click", source = "month_clicks")
     
     base_data <- filtered_data() %>% filter(!is.na(DayOfWeek) & !is.na(Hour))
+    
+    chart_title <- "Sightings by Day & Hour (All Months)"
+    
     if (!is.null(month_click)) {
       selected_month <- month_click$customdata
       base_data <- base_data %>% filter(Month == selected_month)
+      chart_title <- paste("Sightings by Day & Hour in", selected_month)
     }
     
     heat_df <- base_data %>% count(DayOfWeek, Hour)
     if(nrow(heat_df) == 0) {
       return(plotly_empty() %>% layout(
-        title = list(text = "No sightings for this criteria", font = list(color = "#39ff14")),
+        title = list(text = "No sightings for this criteria", font = list(color = "#39ff14", size = 14)),
         paper_bgcolor = 'transparent', plot_bgcolor = 'transparent'
       ))
     }
@@ -98,6 +102,7 @@ server <- function(input, output, session) {
       text = ~paste("<b>Day:</b>", DayOfWeek, "<br><b>Hour:</b>", sprintf("%02d:00", Hour), "<br><b>Sightings:</b>", n)
     ) %>%
       layout(
+        title = list(text = chart_title, font = list(size = 14, color = "white")),
         paper_bgcolor = 'transparent',
         plot_bgcolor = 'transparent',
         font = list(color = 'white'),
@@ -123,8 +128,7 @@ server <- function(input, output, session) {
           bordercolor = "#39ff14",  
           font = list(family = "Space Mono", color = "white", size = 12)
         ),
-        
-        margin = list(l = 50, r = 20, b = 50, t = 20)
+        margin = list(l = 50, r = 20, b = 50, t = 40)
       )
     
     p

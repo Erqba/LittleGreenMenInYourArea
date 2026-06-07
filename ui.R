@@ -26,7 +26,7 @@ ui <- page_navbar(
     conditionalPanel(
       condition = "input.main_tabs == 'The Radar'",
       sliderInput("map_points", "Max Map Points:",
-                  min = 1000, max = 100000, 
+                  min = 1000, max = 15000, 
                   value = 5000, step = 1000)
     ),
     
