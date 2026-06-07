@@ -129,6 +129,7 @@ server <- function(input, output, session) {
     
     p
   })
+  
   output$dynamic_shape_bar <- renderPlotly({
     
     heatmap_click <- event_data("plotly_click", source = "heatmap_clicks")
@@ -136,7 +137,7 @@ server <- function(input, output, session) {
     
     chart_data <- filtered_data() %>% filter(!is.na(Shape) & Shape != "")
     title_parts <- c()
-
+    
     if (!is.null(month_click)) {
       selected_month <- month_click$customdata
       chart_data <- chart_data %>% filter(Month == selected_month)
@@ -223,9 +224,25 @@ server <- function(input, output, session) {
       chart_title <- "Common Characteristics"
     }
     
+    if (nrow(chart_data) == 0) {
+      return(plotly_empty() %>% layout(
+        title = list(text = "Not enough trait data to profile", font = list(color = "#39ff14", size = 14)),
+        paper_bgcolor = 'transparent', plot_bgcolor = 'transparent'
+      ))
+    }
+    
     clean_chars <- str_remove_all(chart_data$Characteristics, "[\\[\\]']")
     split_chars <- strsplit(clean_chars, ",\\s*")
-    trait_counts <- as.data.frame(table(unlist(split_chars)), stringsAsFactors = FALSE)
+    unlisted_chars <- unlist(split_chars)
+    
+    if (length(unlisted_chars) == 0) {
+      return(plotly_empty() %>% layout(
+        title = list(text = "Not enough trait data to profile", font = list(color = "#39ff14", size = 14)),
+        paper_bgcolor = 'transparent', plot_bgcolor = 'transparent'
+      ))
+    }
+    
+    trait_counts <- as.data.frame(table(unlisted_chars), stringsAsFactors = FALSE)
     names(trait_counts) <- c("Characteristics", "n")
     
     traits_data <- trait_counts %>%
@@ -241,7 +258,7 @@ server <- function(input, output, session) {
     }
     
     traits_data <- rbind(traits_data, traits_data[1, ])
-
+    
     plot_ly(
       data = traits_data,             
       type = 'scatterpolar',
