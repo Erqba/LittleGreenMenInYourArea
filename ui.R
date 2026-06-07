@@ -124,13 +124,10 @@ ui <- page_navbar(
             )
   ),
   
-  nav_panel("Classified Info",
+nav_panel("Classified Info",
             card(
-              card_header("TOP SECRET"),
               tags$div(
                 style = "padding: 15px; line-height: 1.6;",
-                
-                tags$p(tags$b("STATUS: "), tags$span("ACTIVE", class = "text-primary")),
                 tags$p("Welcome to the ", tags$b("LittleGreenMenInYourArea."), "This dashboard analyzes over ", tags$b("100,000 UFO sightings"), " compiled from the NUFORC database."),
                 
                 tags$hr(),

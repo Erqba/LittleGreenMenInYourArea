@@ -362,20 +362,20 @@ server <- function(input, output, session) {
     
     if (is.null(selected_row)) {
       return(tags$p("Select a row in the table above to decrypt the witness testimony...", 
-                    style = "color: gray; font-style: italic;"))
+                    class = "text-muted fst-italic"))
     }
     
     incident <- filtered_data()[selected_row, ]
     
     tagList(
-      h4(paste("Incident Location:", incident$Location), style = "color: #39ff14;"),
+      h4(paste("Incident Location:", incident$Location), class = "text-primary"),
       tags$b("Reported Time: "), tags$span(incident$Occurred),
       tags$b("Duration: "), tags$span(incident$Duration),
       tags$hr(),
       tags$b("Summary:"),
       tags$p(incident$Summary),
       tags$b("Full Text:"),
-      tags$blockquote(incident$Text, style = "border-left: 2px solid #39ff14; padding-left: 10px;")
+      tags$blockquote(incident$Text, class = "border-start border-primary border-2 ps-3")
     )
   })
   
