@@ -374,12 +374,10 @@ server <- function(input, output, session) {
     
     scores <- calculate_cosine_similarity(query_embedding, ufo_embeddings)
     
-    results <- ufo_data
-    results$score <- scores
+    top_indices <- order(scores, decreasing = TRUE)[1:3]
     
-    top_results <- results %>%
-      arrange(desc(score)) %>%
-      head(3)
+    top_results <- ufo_data[top_indices, ]
+    top_results$score <- scores[top_indices]
     
     return(top_results)
   })
