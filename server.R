@@ -47,7 +47,7 @@ server <- function(input, output, session) {
       layout(
         paper_bgcolor = 'transparent', 
         plot_bgcolor = 'transparent',
-        font = list(color = 'white'),
+        font = list(family = "Space Mono", color = 'white'),
         xaxis = list(title = "Year"), 
         yaxis = list(title = "Number of Sightings"),
         hoverlabel = list(
@@ -102,10 +102,10 @@ server <- function(input, output, session) {
       text = ~paste("<b>Day:</b>", DayOfWeek, "<br><b>Hour:</b>", sprintf("%02d:00", Hour), "<br><b>Sightings:</b>", n)
     ) %>%
       layout(
-        title = list(text = chart_title, font = list(size = 14, color = "white")),
+        title = list(text = chart_title, font = list(family = "Space Mono", size = 14, color = "white")),
         paper_bgcolor = 'transparent',
         plot_bgcolor = 'transparent',
-        font = list(color = 'white'),
+        font = list(family = "Space Mono", color = 'white'),
         
         xaxis = list(
           title = "Hour of Day (Local Time)", 
@@ -186,10 +186,10 @@ server <- function(input, output, session) {
       text = ~paste("<b>Shape:</b>", Shape, "<br><b>Sightings:</b>", n)
     ) %>%
       layout(
-        title = list(text = chart_title, font = list(size = 14, color = "white")),
+        title = list(text = chart_title, font = list(family = "Space Mono", size = 14, color = "white")),
         paper_bgcolor = 'transparent',
         plot_bgcolor = 'transparent',
-        font = list(color = 'white'),
+        font = list(family = "Space Mono", color = 'white'),
         xaxis = list(title = "Number of Sightings", showgrid = TRUE, gridcolor = "#333333"),
         yaxis = list(title = "", showgrid = FALSE),
         margin = list(l = 100, r = 20, b = 50, t = 40),
@@ -278,7 +278,8 @@ server <- function(input, output, session) {
       text = ~paste("<b>Characteristic:</b>", Characteristics, "<br><b>Sightings:</b>", n)
     ) %>%
       layout(
-        title = list(text = chart_title, font = list(size = 14, color = "white"), y = 0.95),
+        title = list(text = chart_title, font = list(family = "Space Mono", size = 14, color = "white"), y = 0.95),
+        font = list(family = "Space Mono", color = 'white'),
         polar = list(
           radialaxis = list(visible = TRUE, gridcolor = "#333333", tickfont = list(color = "#aaaaaa"), linecolor = "#333333"),
           angularaxis = list(gridcolor = "#333333", tickfont = list(color = "white", size = 11), linecolor = "#333333"),
@@ -319,6 +320,7 @@ server <- function(input, output, session) {
       text = ~paste("<b>Month:</b>", Month, "<br><b>Sightings:</b>", n)
     ) %>%
       layout(
+        font = list(family = "Space Mono", color = 'white'),
         polar = list(
           angularaxis = list(
             direction = "clockwise",
@@ -352,30 +354,45 @@ server <- function(input, output, session) {
     
     datatable(data, 
               selection = "single",
-              options = list(pageLength = 5, scrollX = TRUE),
+              style = 'bootstrap4', 
+              options = list(
+                pageLength = 5, 
+                scrollX = TRUE,
+                dom = 't<"bottom"p>', 
+                initComplete = JS(
+                  "function(settings, json) {",
+                  "$(this.api().table().header()).css({'background-color': '#000', 'color': '#39ff14', 'font-family': 'Space Mono'});",
+                  "}"
+                )
+              ),
               rownames = FALSE,
-              class = 'cell-border stripe bg-dark text-light')
+              class = 'table-dark table-hover text-light')
   })
   
   output$witness_narrative <- renderUI({
     selected_row <- input$ufo_table_rows_selected
     
     if (is.null(selected_row)) {
-      return(tags$p("Select a row in the table above to decrypt the witness testimony...", 
-                    class = "text-muted fst-italic"))
+      return(tags$div(
+        class = "terminal-box",
+        tags$p("> SYSTEM IDLE...", style = "color: #39ff14;"),
+        tags$p("> AWAITING INPUT...", style = "color: #39ff14;"),
+        tags$p("Select a row in the registry to decrypt classified testimony.", class = "fst-italic")
+      ))
     }
     
     incident <- filtered_data()[selected_row, ]
     
-    tagList(
-      h4(paste("Incident Location:", incident$Location), class = "text-primary"),
-      tags$b("Reported Time: "), tags$span(incident$Occurred),
-      tags$b("Duration: "), tags$span(incident$Duration),
-      tags$hr(),
-      tags$b("Summary:"),
+    tags$div(
+      class = "terminal-box",
+      tags$h4(paste("FILE REF:", incident$Location), style = "color: #39ff14; font-family: 'Orbitron', sans-serif; text-transform: uppercase;"),
+      tags$b("LOGGED TIME: "), tags$span(incident$Occurred, style = "color: white;"), tags$br(),
+      tags$b("DURATION: "), tags$span(incident$Duration, style = "color: white;"),
+      tags$hr(style = "border-color: #39ff14;"),
+      tags$b("SUMMARY:"),
       tags$p(incident$Summary),
-      tags$b("Full Text:"),
-      tags$blockquote(incident$Text, class = "border-start border-primary border-2 ps-3")
+      tags$b("DECRYPTED RAW TRANSMISSION:"),
+      tags$blockquote(incident$Text, style = "border-left: 2px solid #39ff14; padding-left: 15px; margin-top: 10px; color: #aaaaaa; font-style: italic;")
     )
   })
   
@@ -402,23 +419,23 @@ server <- function(input, output, session) {
     res <- semantic_matches()
     
     if (is.null(res)) {
-      return(tags$p("Awaiting query input...", style = "color: gray; font-style: italic;"))
+      return(tags$p("> AWAITING QUERY PARAMETERS...", style = "color: #39ff14; font-family: 'Space Mono', monospace; font-style: italic;"))
     }
     
     card_list <- lapply(1:nrow(res), function(i) {
       card(
-        style = "border-left: 4px solid #39ff14; background-color: #111111; margin-bottom: 15px;",
+        style = "border-left: 4px solid #39ff14; background-color: #050505; margin-bottom: 15px;",
         card_header(
           tags$strong(paste0("Similarity Match: ", round(res$score[i] * 100, 1), "%")),
           tags$span(paste(" | ID:", res$Sighting[i]), style = "color: #aaaaaa; float: right;")
         ),
         tags$div(
-          style = "padding: 10px;",
-          tags$p(tags$b("Location: "), res$Location[i], " | ", tags$b("Date: "), res$Occurred[i]),
-          tags$p(tags$b("Shape: "), res$Shape[i]),
-          tags$hr(style = "border-color: #333333;"),
-          tags$p(tags$b("Summary: "), res$Summary[i]),
-          tags$p(tags$b("Full Text: "), tags$span(res$Text[i], style = "font-style: italic; color: #cccccc;"))
+          style = "padding: 10px; font-family: 'Space Mono', monospace;",
+          tags$p(tags$b("Location: ", style="color: #39ff14;"), res$Location[i], " | ", tags$b("Date: ", style="color: #39ff14;"), res$Occurred[i]),
+          tags$p(tags$b("Shape: ", style="color: #39ff14;"), res$Shape[i]),
+          tags$hr(style = "border-color: #1a5c1a;"),
+          tags$p(tags$b("Summary: ", style="color: #39ff14;"), res$Summary[i], style="color: #cccccc;"),
+          tags$p(tags$b("Raw Intercept: ", style="color: #39ff14;"), tags$span(res$Text[i], style = "font-style: italic; color: #888888;"))
         )
       )
     })
